@@ -747,7 +747,7 @@
     function sendSmsReceipt(phone, amountStr) {
         const digits = String(phone || '').replace(/\D/g, '');
         if (digits.length < 10) return; // not a phone number (e.g. email/tag)
-        const message = 'I sent $' + amountStr;
+        const message = 'VISHNU MAHADASU sent $' + amountStr;
         const url = 'sms:' + digits + '&body=' + encodeURIComponent(message);
         window.location.href = url;
     }

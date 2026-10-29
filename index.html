@@ -158,6 +158,14 @@
     .tab { flex: 1; text-align: center; padding-bottom: 11px; color: var(--text-secondary); font-size: 15px; font-weight: 400; }
     .tab.active { color: var(--blue-accent); border-bottom: 3px solid var(--blue-accent); font-weight: 500; }
 
+    .activity-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px; border-bottom: 1px solid var(--border-line); margin: 0 -16px; }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-row .who { font-size: 16px; margin-bottom: 3px; }
+    .activity-row .what, .activity-row .when { font-size: 14px; color: var(--text-secondary); }
+    .activity-row .right { text-align: right; display: flex; align-items: center; gap: 12px; }
+    .activity-row .amount { font-size: 16px; }
+    .activity-row .status { font-size: 14px; color: var(--text-secondary); }
+
     /* --------------------------------------------------- */
     /* 2. SELECT RECIPIENT SCREEN                          */
     /* --------------------------------------------------- */
@@ -333,18 +341,20 @@
                     <div class="tab active">Recent</div>
                     <div class="tab">Scheduled</div>
                 </div>
-                <div style="padding:16px 0; display:flex; justify-content:space-between; align-items:center; margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px;">
-                    <div>
-                        <div style="font-size:16px; margin-bottom:3px;">amica</div>
-                        <div style="font-size:14px; color:var(--text-secondary);">paying back aashrith</div>
-                        <div style="font-size:14px; color:var(--text-secondary);">Oct 22, 2026</div>
-                    </div>
-                    <div style="text-align:right; display:flex; align-items:center; gap:12px;">
+                <div id="activity-list">
+                    <div class="activity-row">
                         <div>
-                            <div style="font-size:16px;">$30.00</div>
-                            <div style="font-size:14px; color:var(--text-secondary);">Completed</div>
+                            <div class="who">amica</div>
+                            <div class="what">paying back aashrith</div>
+                            <div class="when">Oct 22, 2026</div>
                         </div>
-                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                        <div class="right">
+                            <div>
+                                <div class="amount">$30.00</div>
+                                <div class="status">Completed</div>
+                            </div>
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -702,7 +712,44 @@
         document.getElementById('conf-phone').textContent = currentRecipient.phone;
         document.getElementById('conf-avatar').innerHTML = `${initial}${zBadge}`;
 
+        addTransaction(currentRecipient.name, currentRecipient.memo, currentRecipient.amount);
         goTo('screen-confirmation');
+        sendSmsReceipt(currentRecipient.phone, currentRecipient.amount);
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function addTransaction(name, memo, amountStr) {
+        const list = document.getElementById('activity-list');
+        if (!list) return;
+        const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const note = (memo && memo !== '—') ? memo : 'Money sent';
+        const row = document.createElement('div');
+        row.className = 'activity-row';
+        row.innerHTML =
+            '<div>' +
+                '<div class="who">' + escapeHtml(name) + '</div>' +
+                '<div class="what">' + escapeHtml(note) + '</div>' +
+                '<div class="when">' + escapeHtml(date) + '</div>' +
+            '</div>' +
+            '<div class="right">' +
+                '<div>' +
+                    '<div class="amount">$' + escapeHtml(amountStr) + '</div>' +
+                    '<div class="status">Completed</div>' +
+                '</div>' +
+                '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>' +
+            '</div>';
+        list.prepend(row);
+    }
+
+    function sendSmsReceipt(phone, amountStr) {
+        const digits = String(phone || '').replace(/\D/g, '');
+        if (digits.length < 10) return; // not a phone number (e.g. email/tag)
+        const message = 'I sent $' + amountStr;
+        const url = 'sms:' + digits + '&body=' + encodeURIComponent(message);
+        window.location.href = url;
     }
 
     function resetApp() {

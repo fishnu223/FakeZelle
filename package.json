@@ -1,0 +1,9 @@
+{
+  "name": "fakezelle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zelle-style send-money web prototype with a Twilio SMS receipt function",
+  "dependencies": {
+    "twilio": "^5.5.1"
+  }
+}

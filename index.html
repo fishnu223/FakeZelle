@@ -621,6 +621,8 @@
 </div>
 
 <script>
+    const SENDER_NAME = 'Vishnu Mahadasu';
+
     let currentRecipient = {
         name: 'test',
         registeredName: 'V************', 
@@ -744,18 +746,22 @@
         list.prepend(row);
     }
 
-    function sendSmsReceipt(phone, amountStr) {
+    async function sendSmsReceipt(phone, amountStr) {
         const digits = String(phone || '').replace(/\D/g, '');
         if (digits.length < 10) return; // not a phone number (e.g. email/tag)
-        const message = 'VISHNU MAHADASU sent $' + amountStr;
-        const url = 'sms:' + digits + '&body=' + encodeURIComponent(message);
-        // Anchor click triggers the sms: scheme more reliably on iOS Safari
-        const a = document.createElement('a');
-        a.href = url;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        const to = digits.length === 10 ? '+1' + digits : '+' + digits;
+        const message = SENDER_NAME + ' sent you $' + amountStr + '. Reply STOP to opt out.';
+        try {
+            const res = await fetch('/.netlify/functions/send-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: to, message: message })
+            });
+            if (!res.ok) throw new Error('status ' + res.status);
+        } catch (err) {
+            console.error('SMS send failed:', err);
+            alert('Could not send the receipt text (' + err.message + ').');
+        }
     }
 
     function resetApp() {
